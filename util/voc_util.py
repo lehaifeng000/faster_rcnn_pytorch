@@ -39,7 +39,9 @@ class FRCNNDataset(Dataset):
             lines=train_lines
         else:
             lines=test_lines
-        for line in lines:
+        for index,line in enumerate(lines):
+            if index>20:
+                break
             line = line.split(' ')[0]
             xml_path = ANNOTATION_ROOT.joinpath(line+'.xml')
             collection = parse(str(xml_path)).documentElement

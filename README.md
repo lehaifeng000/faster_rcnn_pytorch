@@ -10,5 +10,5 @@ dataset
 - now I just use the torchvision to build my own faster-rcnn network
 
 ## environment
-- torch 1.8.1
-- torchvision 0.9.1
+- torch 1.7.1
+- torchvision 0.8.2

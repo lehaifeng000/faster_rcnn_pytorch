@@ -1,10 +1,9 @@
 import math
 
 import torch
+from torch.jit.annotations import List, Tuple
 from torch import Tensor
-from typing import List, Tuple
-
-from torchvision.ops.misc import FrozenBatchNorm2d
+import torchvision
 
 
 class BalancedPositiveNegativeSampler(object):
@@ -15,7 +14,7 @@ class BalancedPositiveNegativeSampler(object):
     def __init__(self, batch_size_per_image, positive_fraction):
         # type: (int, float) -> None
         """
-        Args:
+        Arguments:
             batch_size_per_image (int): number of elements to be selected per image
             positive_fraction (float): percentace of positive elements per batch
         """
@@ -25,7 +24,7 @@ class BalancedPositiveNegativeSampler(object):
     def __call__(self, matched_idxs):
         # type: (List[Tensor]) -> Tuple[List[Tensor], List[Tensor]]
         """
-        Args:
+        Arguments:
             matched idxs: list of tensors containing -1, 0 or positive values.
                 Each tensor corresponds to a specific image.
                 -1 values are ignored, 0 are considered as negatives and > 0 as
@@ -83,10 +82,9 @@ def encode_boxes(reference_boxes, proposals, weights):
     Encode a set of proposals with respect to some
     reference boxes
 
-    Args:
+    Arguments:
         reference_boxes (Tensor): reference boxes
         proposals (Tensor): boxes to be encoded
-        weights (Tensor[4]): the weights for ``(x, y, w, h)``
     """
 
     # perform some unpacking to make it JIT-fusion friendly
@@ -134,7 +132,7 @@ class BoxCoder(object):
     def __init__(self, weights, bbox_xform_clip=math.log(1000. / 16)):
         # type: (Tuple[float, float, float, float], float) -> None
         """
-        Args:
+        Arguments:
             weights (4-element tuple)
             bbox_xform_clip (float)
         """
@@ -154,7 +152,7 @@ class BoxCoder(object):
         Encode a set of proposals with respect to some
         reference boxes
 
-        Args:
+        Arguments:
             reference_boxes (Tensor): reference boxes
             proposals (Tensor): boxes to be encoded
         """
@@ -174,21 +172,17 @@ class BoxCoder(object):
         box_sum = 0
         for val in boxes_per_image:
             box_sum += val
-        if box_sum > 0:
-            rel_codes = rel_codes.reshape(box_sum, -1)
         pred_boxes = self.decode_single(
-            rel_codes, concat_boxes
+            rel_codes.reshape(box_sum, -1), concat_boxes
         )
-        if box_sum > 0:
-            pred_boxes = pred_boxes.reshape(box_sum, -1, 4)
-        return pred_boxes
+        return pred_boxes.reshape(box_sum, -1, 4)
 
     def decode_single(self, rel_codes, boxes):
         """
         From a set of original boxes and encoded relative box offsets,
         get the decoded boxes.
 
-        Args:
+        Arguments:
             rel_codes (Tensor): encoded boxes
             boxes (Tensor): reference boxes.
         """
@@ -355,21 +349,3 @@ def smooth_l1_loss(input, target, beta: float = 1. / 9, size_average: bool = Tru
     if size_average:
         return loss.mean()
     return loss.sum()
-
-
-def overwrite_eps(model, eps):
-    """
-    This method overwrites the default eps values of all the
-    FrozenBatchNorm2d layers of the model with the provided value.
-    This is necessary to address the BC-breaking change introduced
-    by the bug-fix at pytorch/vision#2933. The overwrite is applied
-    only when the pretrained weights are loaded to maintain compatibility
-    with previous versions.
-
-    Args:
-        model (nn.Module): The model on which we perform the overwrite.
-        eps (float): The new value of eps.
-    """
-    for module in model.modules():
-        if isinstance(module, FrozenBatchNorm2d):
-            module.eps = eps
