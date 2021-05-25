@@ -1,6 +1,3 @@
-import numpy as np
-
-a=np.ones((20,30))
-b=np.ones((20,30))
-c=a*b
-print(c.shape)
+a=[1,2,3,4,5,6]
+se=1:3
+print(a[se])
