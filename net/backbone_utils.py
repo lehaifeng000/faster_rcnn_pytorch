@@ -157,17 +157,6 @@ def resnet_backbone(
     classifier = list([model.layer4, model.avgpool])
     extractor = nn.Sequential(*extractor)
     classifier = nn.Sequential(*classifier)
-    # if extra_blocks is None:
-    #     extra_blocks = LastLevelMaxPool()
-
-    # if returned_layers is None:
-    #     returned_layers = [1, 2, 3, 4]
-    # assert min(returned_layers) > 0 and max(returned_layers) < 5
-    # return_layers = {f'layer{k}': str(v) for v, k in enumerate(returned_layers)}
-
-    # in_channels_stage2 = backbone.inplanes // 8
-    # in_channels_list = [in_channels_stage2 * 2 ** (i - 1) for i in returned_layers]
-    # out_channels = 256
 
     return Backbone(extractor, classifier, 1024)
     # return BackboneWithFPN(backbone, return_layers, in_channels_list, out_channels, extra_blocks=extra_blocks)
